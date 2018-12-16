@@ -1,7 +1,7 @@
 TITLE = "Egg Bunny Jumps"
 # screen dims
-WIDTH = 480
-HEIGHT = 600
+WIDTH = 530
+HEIGHT = 680
 # frames per second
 FPS = 60
 # colors
@@ -22,8 +22,13 @@ PLAYER_FRICTION = -0.12
 PLAYER_GRAV = 0.8
 PLAYER_JUMP = 25
 # game settings
-BOOST_POWER = 60
-POW_SPAWN_PCT = 7
+#Boost sends player down
+BOOST_POWER = -60
+BOOST_POWER2 = 60
+MOB_POWER = 60
+POW_SPAWN_PCT = 5
+CARROT_SPAWN_PCT = 5
+SPIKE_SPAWN_PCT = 5
 MOB_FREQ = 500
 # layers - uses numerical value in layered sprites
 PLAYER_LAYER = 2

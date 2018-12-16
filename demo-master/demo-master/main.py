@@ -1,25 +1,33 @@
-# this file was created by Chris Cozort
-# Sources: goo.gl/2KMivS 
+# this file was created by Fernando Salvador Francisco
+# Sources: 
+# goo.gl/2KMivS, 
+# Kids can Code videos
 # now available in github
 
 '''
 Curious, Creative, Tenacious(requires hopefulness)
 
 **********Gameplay ideas:
-Jump on enemy head to create jump boost using power up code
-Randomize jump sound
+Continuous jumping; No stopping at anytime. 
 
 **********Bugs
-when you get launched by powerup or head jump player sometimes snaps to platform abruptly 
-happens when hitting jump during power up boost
+Boost/spikes stay in place and don't follow the moving platforms
+Player dosen't stay in place when landing with the moving platform; Slides along the platfrom
+Boost don't give the powerup to the player from time to time.(This is a rare glitch)
+Screen doesn't scroll with the player while the player is continuinh to jump up.
+If player touches spikes the game crashes
 
 **********Gameplay fixes
-Platform randomness leaves player in limbo for extended periods
-Lower spawn location so player can get out of random stuck situations
+PLatfroms don't scroll/move right with the player as the player moves from left to right. 
+Platforms move on their own. 
 
 **********Features
-Varied powerups
-
+Varied powerups; 
+1. Halo boost sends player down, 
+2. Enenmy sends player up if player jumps on head.
+3. Scecond boost sends player up, and actual boost.
+Higher jump.
+Spikes can spawn on platfroms and kill player.
 
 '''
 import pygame as pg
@@ -84,7 +92,11 @@ class Game:
         self.clouds = pg.sprite.Group()
         # add powerups
         self.powerups = pg.sprite.Group()
-        
+        # add carrot powerup
+        self.carrot = pg.sprite.Group()
+        # add spikes
+        self.spikes = pg.sprite.Group()
+
         self.mob_timer = 0
         # add a player 1 to the group
         self.player = Player(self)
@@ -138,12 +150,12 @@ class Game:
                 print("player is " + str(self.player.pos.y))
                 print("mob is " + str(mob_hits[0].rect_top))
                 self.head_jump_sound.play()
-                self.player.vel.y = -BOOST_POWER
+                self.player.vel.y = -BOOST_POWER2
             else:
                 print("player is " + str(self.player.pos.y))
                 print("mob is " + str(mob_hits[0].rect_top))
                 self.playing = False
-
+       
         # check to see if player can jump - if falling
         if self.player.vel.y > 0:
             hits = pg.sprite.spritecollide(self.player, self.platforms, False)
@@ -153,6 +165,7 @@ class Game:
                 for hit in hits:
                     if hit.rect.bottom > find_lowest.rect.bottom:
                         print("hit rect bottom " + str(hit.rect.bottom))
+                        # self.player.hit.bottom >= self.platfroms.rect.top
                         find_lowest = hit
                 # fall if center is off platform
                 if self.player.pos.x < find_lowest.rect.right + 10 and self.player.pos.x > find_lowest.rect.left - 10:
@@ -160,43 +173,69 @@ class Game:
                         self.player.pos.y = find_lowest.rect.top
                         self.player.vel.y = 0
                         self.player.jumping = False
+        # Making so player moves with the moving platfrom when keys not used
+        # if self.player:
+        #     hits = pg.sprite.spritecollide(self.player, self.platforms, False)
+        #     if hits:
+        #         self.player.bottom = self.platforms.top - 5            
                 
         # if player reaches top 1/4 of screen...
+        # make clouds and mobs scroll diagonally right
         if self.player.rect.top <= HEIGHT / 4:
+            # self.screen = WIDTH 
             # spawn a cloud
             if randrange(100) < 13:
                 Cloud(self)
             # set player location based on velocity
             self.player.pos.y += max(abs(self.player.vel.y), 2)
+            # self.player.pos.x += max(abs(self.player.vel.x), 2)
             for cloud in self.clouds:
                 cloud.rect.y += max(abs(self.player.vel.y / randrange(2,10)), 2)
+                cloud.rect.x += max(abs(self.player.vel.x / randrange(2,10)), 2)
             # creates slight scroll at the top based on player y velocity
             # scroll plats with player
             
             for mob in self.mobs:
                 # creates slight scroll based on player y velocity
                 mob.rect.y += max(abs(self.player.vel.y), 2)
+                mob.rect.x += max(abs(self.player.vel.x), 2)
             for plat in self.platforms:
                 # creates slight scroll based on player y velocity
                 plat.rect.y += max(abs(self.player.vel.y), 2)
+                # plat.rect.x += max(abs(self.player.vel.x), 2)
                 if plat.rect.top >= HEIGHT + 40:
                     plat.kill()
                     self.score += 10
-        # if player hits a power up
+        #Player gets a power up
         pow_hits = pg.sprite.spritecollide(self.player, self.powerups, True)
         for pow in pow_hits:
-            if pow.type == 'boost':
+            if pow.type == 'desend':
                 self.boost_sound.play()
                 self.player.vel.y = -BOOST_POWER
+                # self.player.vel.x = -BOOST_POWER
                 self.player.jumping = False
+        carrot_hits = pg.sprite.spritecollide(self.player, self.carrot, True)
+        for pow in carrot_hits:
+            if pow.type == 'asend':
+                self.boost_sound.play()
+                self.player.vel.y = -BOOST_POWER2
+                # self.player.vel.x = -BOOST_POWER2
+                self.player.jumping = False   
+         # Spike prop kills player upon collision
+        spikes_hits = pg.sprite.spritecollide(self.player, self.spikes, False)
+        if spikes_hits:
+                self.player = False
         #Screen Scrolling, Credits: Nate M.
+        #Once platform is out of screen, and player is one platform, platfrom is automatically deleted 
         for plat in self.platforms:
             plat.rect.y += 1
+            plat.rect.x += 1
+            # self.screen += 5
             if plat.rect.top >= HEIGHT:
                 plat.kill()
                 self.score += 10
         
-        # Die!
+        # Player out of screen
         if self.player.rect.bottom >= HEIGHT:
             '''make all sprites fall up when player falls'''
             for sprite in self.all_sprites:
@@ -263,7 +302,7 @@ class Game:
             print("not running...")
             return
         self.screen.fill(BLACK)
-        self.draw_text("You Dead, Again?", 48, WHITE, WIDTH/2, HEIGHT/4)
+        self.draw_text("You Failed, Again?", 48, WHITE, WIDTH/2, HEIGHT/4)
         self.draw_text("AD to move left/right, Space to jump", 22, WHITE, WIDTH/2, HEIGHT/2)
         self.draw_text("Press any key to play...", 22, WHITE, WIDTH / 2, HEIGHT * 3/4)
         self.draw_text("High score " + str(self.highscore), 22, WHITE, WIDTH / 2, HEIGHT/2 + 40)

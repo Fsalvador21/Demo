@@ -86,7 +86,7 @@ class Player(Sprite):
             self.pos.x = WIDTH + self.rect.width / 2
 
         self.rect.midbottom = self.pos
-    # cuts the jump short when the space bar is released
+    # Release of space defines the jump "height"
     def jump_cut(self):
         if self.jumping:
             if self.vel.y < -5:
@@ -104,6 +104,7 @@ class Player(Sprite):
             self.game.jump_sound[choice([0,1])].play()
             # tell the program that player is currently jumping
             self.jumping = True
+            # else not hits
             self.vel.y = -PLAYER_JUMP
             print(self.acc.y)
     def animate(self):
@@ -177,7 +178,7 @@ class Platform(Sprite):
         Sprite.__init__(self, self.groups)
         self.game = game
         images = [self.game.spritesheet.get_image(0, 96, 380, 94), 
-                  self.game.spritesheet.get_image(218, 1456, 201, 100)
+                  self.game.spritesheet.get_image(262, 1152, 200, 100)
                 #   self.game.spritesheet.get_image(213, 1764, 201, 100)
                 ]   
         self.image = random.choice(images)
@@ -190,6 +191,10 @@ class Platform(Sprite):
         self.rect.y = y
         if random.randrange(100) < POW_SPAWN_PCT:
             Pow(self.game, self)
+        if random.randrange(100) < CARROT_SPAWN_PCT:
+            Carrot(self.game, self)
+        if random.randrange(100) < SPIKE_SPAWN_PCT:
+            Spike(self.game, self)
 class Pow(Sprite):
     def __init__(self, game, plat):
         # allows layering in LayeredUpdates sprite group
@@ -199,8 +204,32 @@ class Pow(Sprite):
         Sprite.__init__(self, self.groups)
         self.game = game
         self.plat = plat
-        self.type = random.choice(['boost'])
-        self.image = self.game.spritesheet.get_image(826, 1220, 71, 70)
+        self.type = random.choice(['desend'])
+        self.image = self.game.spritesheet.get_image(826, 134, 71, 70)
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        # self.type = random.choice(['asend'])
+        # self.image = self.game.spritesheet.get_image(826, 1220, 71, 70)
+        # self.image.set_colorkey(BLACK)
+        # self.rect = self.image.get_rect()
+        self.rect.centerx = self.plat.rect.centerx
+        self.rect.bottom = self.plat.rect.top - 5
+    def update(self):
+        self.rect.bottom = self.plat.rect.top - 5
+        # checks to see if plat is in the game's platforms group so we can kill the powerup instance
+        if not self.game.platforms.has(self.plat):
+            self.kill()
+class Carrot(Sprite):    
+    def __init__(self, game, plat):
+        # LayeredUpdates sprite group allows layering
+        self._layer = POW_LAYER
+        # add a groups property where we can pass all instances of this object into game groups
+        self.groups = game.all_sprites, game.carrot
+        Sprite.__init__(self, self.groups)
+        self.game = game
+        self.plat = plat
+        self.type = random.choice(['asend'])
+        self.image = self.game.spritesheet.get_image(814, 1661, 78, 70)
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx = self.plat.rect.centerx
@@ -210,6 +239,7 @@ class Pow(Sprite):
         # checks to see if plat is in the game's platforms group so we can kill the powerup instance
         if not self.game.platforms.has(self.plat):
             self.kill()
+    
 class Mob(Sprite):
     def __init__(self, game):
         # allows layering in LayeredUpdates sprite group
@@ -251,3 +281,25 @@ class Mob(Sprite):
         self.rect.y += self.vy
         if self.rect.left > WIDTH + 100 or self.rect.right < -100:
             self.kill()
+
+# Add kil-player props/items on platforms
+class Spike(Sprite):
+    def __init__(self, game, plat):
+        # allows layering in LayeredUpdates sprite group
+        self._layer = POW_LAYER
+        # add a groups property where we can pass all instances of this object into game groups
+        self.groups = game.all_sprites, game.spikes
+        Sprite.__init__(self, self.groups)
+        self.game = game
+        self.plat = plat
+        self.image = self.game.spritesheet.get_image(232, 1390, 95, 53)
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = self.plat.rect.centerx
+        self.rect.bottom = self.plat.rect.top - 5
+    def update(self):
+        self.rect.bottom = self.plat.rect.top - 5
+        # checks to see if plat is in the game's platforms group so we can kill the powerup instance
+        if not self.game.platforms.has(self.plat):
+            self.kill()        
+
